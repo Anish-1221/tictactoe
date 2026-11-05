@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tic-Tac-Toe for N Players</title>
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  .tasks { display: grid; gap: 12px; max-width: 760px; }
+  .tasks a {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 18px;
+    align-items: baseline;
+    padding: 16px 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .tasks a:hover { border-color: var(--line-firm); }
+  .tasks .no {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+  .tasks h2 { margin: 0 0 3px; font-size: 16px; font-weight: 600; }
+  .tasks p  { margin: 0; font-size: 14px; color: var(--ink-soft); }
+  .lede { max-width: 66ch; color: var(--ink-soft); margin: 0 0 28px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>Tic-tac-toe for N players</h1>
+      <p class="sub">CS 6364 project &mdash; minimax, alpha-beta pruning and
+        max<sup>n</sup></p>
+    </div>
+  </div>
+
+  <p class="lede">Five implementations, from the two-player 3&times;3 game
+     solved exhaustively by minimax up to a 10&times;10 board played by three
+     machine players. Plain HTML, CSS and JavaScript throughout: no build
+     step and no server.</p>
+
+  <div class="tasks">
+    <a href="Task1/index.html">
+      <span class="no">Task 1</span>
+      <span>
+        <h2>The supplied sample</h2>
+        <p>3&times;3, you against the machine, plain minimax with no pruning.</p>
+      </span>
+    </a>
+    <a href="Task2/index.html">
+      <span class="no">Task 2</span>
+      <span>
+        <h2>Alpha-beta pruning</h2>
+        <p>Same game, same moves, 96% fewer nodes. Both counts shown on every
+           move.</p>
+      </span>
+    </a>
+    <a href="Task3/index.html">
+      <span class="no">Task 3</span>
+      <span>
+        <h2>Machine against machine</h2>
+        <p>Two agents, N games, a win and loss tally, and a search depth
+           control for each side.</p>
+      </span>
+    </a>
+    <a href="Task4/index.html">
+      <span class="no">Task 4</span>
+      <span>
+        <h2>Three players on 4&times;4</h2>
+        <p>Minimax does not generalise past two players, so this uses
+           max<sup>n</sup>.</p>
+      </span>
+    </a>
+    <a href="Task5/index.html">
+      <span class="no">Task 5</span>
+      <span>
+        <h2>Scaling to B&times;B</h2>
+        <p>Boards up to 10&times;10 with the search heuristics exposed as
+           controls.</p>
+      </span>
+    </a>
+  </div>
+
+  <div class="notes">
+    <h2>Source</h2>
+    <p>Code at <code>github.com/Anish-1221/tictactoe</code>. The Task 1 sample
+       is from <em>Artificial Intelligence in Game Development</em>, published
+       by Packt and MIT licensed.</p>
+  </div>
+
+</div>
+</body>
+</html>
