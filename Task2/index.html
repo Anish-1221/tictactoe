@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task 2 — Alpha-Beta Pruning</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>Alpha-beta pruning</h1>
+      <p class="sub">3&times;3 board, you against the machine</p>
+    </div>
+    <div class="spacer"></div>
+    <nav class="tasknav">
+      <a href="../Task1/index.html">Task 1</a>
+      <a href="../Task2/index.html" aria-current="page">Task 2</a>
+      <a href="../Task3/index.html">Task 3</a>
+      <a href="../Task4/index.html">Task 4</a>
+      <a href="../Task5/index.html">Task 5</a>
+    </nav>
+  </div>
+
+  <div class="layout">
+
+    <div class="board-holder">
+      <div class="status" id="status">Your move.</div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Game</h2>
+        <div class="field">
+          <label for="first">Who moves first</label>
+          <select id="first">
+            <option value="human" selected>You (&times;)</option>
+            <option value="machine">Machine (&#9675;)</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:6px">
+          <label style="display:flex;gap:7px;align-items:flex-start;cursor:pointer">
+            <input type="checkbox" id="compare" checked style="margin-top:3px">
+            <span>Also run unpruned minimax on each move, to measure what
+                  pruning saves</span>
+          </label>
+        </div>
+        <button class="action" id="newgame">New game</button>
+      </div>
+
+      <div class="panel">
+        <h2>Last search</h2>
+        <table class="readout">
+          <tr><th>Alpha-beta nodes</th><td id="ab-nodes">&ndash;</td></tr>
+          <tr><th>Unpruned nodes</th><td id="mm-nodes">&ndash;</td></tr>
+          <tr><th>Nodes avoided</th><td id="saved">&ndash;</td></tr>
+          <tr><th>Cutoffs</th><td id="cutoffs">&ndash;</td></tr>
+          <tr><th>Branches skipped</th><td id="skipped">&ndash;</td></tr>
+          <tr><th>Search time</th><td id="ms">&ndash;</td></tr>
+          <tr><th>Move value</th><td id="score">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Moves this game</h2>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h2>What this task shows</h2>
+    <p>Alpha-beta pruning returns exactly the same move as plain minimax but
+       visits far fewer positions. From an empty board the unpruned search
+       explores 549,946 nodes; alpha-beta reaches the same conclusion in
+       20,866, a reduction of about 96%. Both figures are reported above on
+       every move so the saving is visible rather than asserted.</p>
+    <p>The pruning rule: during the search each side tracks the best score it
+       can already guarantee elsewhere, called <code>alpha</code> for the
+       maximising player and <code>beta</code> for the minimising one. When
+       <code>alpha &gt;= beta</code> the player choosing at the parent node
+       would never allow play to reach the current position, so the remaining
+       sibling moves cannot affect the outcome and are abandoned. Each
+       abandonment is counted as a cutoff.</p>
+    <p>The machine plays perfectly, so the best you can get is a draw.</p>
+  </div>
+
+</div>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task 4 — 4×4, Three Machine Players</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>Three players on a 4&times;4 board</h1>
+      <p class="sub">max<sup>n</sup> search, N games, full scoreboard</p>
+    </div>
+    <div class="spacer"></div>
+    <nav class="tasknav">
+      <a href="../Task1/index.html">Task 1</a>
+      <a href="../Task2/index.html">Task 2</a>
+      <a href="../Task3/index.html">Task 3</a>
+      <a href="../Task4/index.html" aria-current="page">Task 4</a>
+      <a href="../Task5/index.html">Task 5</a>
+    </nav>
+  </div>
+
+  <div class="layout">
+
+    <div class="board-holder">
+      <div class="status" id="status">Set the options, then run.</div>
+      <div class="board" id="board"></div>
+      <div id="warn" class="hint" style="color:var(--p2);min-height:18px"></div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Run</h2>
+        <div class="field">
+          <label for="games">Number of games (1&ndash;10)</label>
+          <input type="number" id="games" min="1" max="10" value="10">
+        </div>
+        <div class="field">
+          <label for="winlen">Marks in a row needed to win</label>
+          <select id="winlen">
+            <option value="3" selected>3 in a row</option>
+            <option value="4">4 in a row</option>
+          </select>
+          <div class="hint">4 in a row on this board is a forced draw with
+            three players; see the note below</div>
+        </div>
+        <div class="field">
+          <label for="depth">Search depth</label>
+          <input type="number" id="depth" min="1" max="6" value="4">
+          <div class="hint">Plies looked ahead before the heuristic takes over</div>
+        </div>
+        <div class="field">
+          <label for="delay">Move delay <span id="delayval">120 ms</span></label>
+          <input type="range" id="delay" min="0" max="400" step="20" value="120">
+          <div class="hint">Set to 0 to run the batch instantly</div>
+        </div>
+        <button class="action" id="run">Run 10 games</button>
+        <button class="quiet" id="stop" disabled>Stop</button>
+        <div class="progress"><i id="bar"></i></div>
+      </div>
+
+      <div class="panel">
+        <h2>Scoreboard</h2>
+        <table class="score">
+          <tr>
+            <th>Player</th><th class="n">Won</th>
+            <th class="n">Lost</th><th class="n">Drew</th>
+          </tr>
+          <tr class="r1">
+            <td><span class="glyph">&#10005;</span> Player 1</td>
+            <td class="n" id="w1">0</td><td class="n" id="l1">0</td>
+            <td class="n" id="d1">0</td>
+          </tr>
+          <tr class="r2">
+            <td><span class="glyph">&#9675;</span> Player 2</td>
+            <td class="n" id="w2">0</td><td class="n" id="l2">0</td>
+            <td class="n" id="d2">0</td>
+          </tr>
+          <tr class="r3">
+            <td><span class="glyph">&#9651;</span> Player 3</td>
+            <td class="n" id="w3">0</td><td class="n" id="l3">0</td>
+            <td class="n" id="d3">0</td>
+          </tr>
+        </table>
+        <table class="readout" style="margin-top:14px">
+          <tr><th>Games played</th><td id="played">&ndash;</td></tr>
+          <tr><th>Drawn games</th><td id="draws">&ndash;</td></tr>
+          <tr><th>Nodes searched</th><td id="nodes">&ndash;</td></tr>
+          <tr><th>Total time</th><td id="ttime">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Game by game</h2>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h2>Why this is not minimax</h2>
+    <p>Minimax needs two players whose interests are exactly opposed, so a
+       single number can describe the position for both: what helps one hurts
+       the other by the same amount. With three players that stops holding. If
+       player 1 is ahead then players 2 and 3 are both behind, but not equally,
+       and neither position is the negation of player 1's.</p>
+    <p>This task uses max<sup>n</sup> instead. Every position is scored as a
+       vector with one component per player, and whoever is to move picks the
+       child that maximises their own component. With two players and a
+       zero-sum rule max<sup>n</sup> reduces to ordinary minimax, so it is a
+       generalisation rather than a different algorithm.</p>
+    <p>Alpha-beta does not carry over, because it depends on
+       <code>alpha</code> and <code>beta</code> being two views of one number
+       and there is no such pair once scores are vectors. Two sound prunes are
+       used instead: a move that wins immediately ends the search of its
+       siblings, and candidate moves are limited to cells near existing marks.</p>
+
+    <h2>On the choice of win length</h2>
+    <p>Four in a row is the natural rule for a 4&times;4 board, but with three
+       players it is a forced draw. Sixteen cells split three ways gives each
+       player five or six marks, and any line one player threatens can be
+       blocked by either of the other two. Every batch run at four in a row
+       ends drawn, at every search depth tested. Three in a row is therefore
+       the default here, so the scoreboard shows something; switch the control
+       to four to reproduce the drawn result.</p>
+  </div>
+
+</div>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
