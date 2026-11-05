@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task 3 — Machine vs Machine</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>Machine against machine</h1>
+      <p class="sub">3&times;3 board, two alpha-beta agents, N games</p>
+    </div>
+    <div class="spacer"></div>
+    <nav class="tasknav">
+      <a href="../Task1/index.html">Task 1</a>
+      <a href="../Task2/index.html">Task 2</a>
+      <a href="../Task3/index.html" aria-current="page">Task 3</a>
+      <a href="../Task4/index.html">Task 4</a>
+      <a href="../Task5/index.html">Task 5</a>
+    </nav>
+  </div>
+
+  <div class="layout">
+
+    <div class="board-holder">
+      <div class="status" id="status">Set the options, then run.</div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Run</h2>
+        <div class="field">
+          <label for="games">Number of games (1&ndash;10)</label>
+          <input type="number" id="games" min="1" max="10" value="10">
+        </div>
+        <div class="field">
+          <label for="d1">Player 1 <span style="color:var(--p1)">&#10005;</span>
+            search depth</label>
+          <input type="number" id="d1" min="1" max="9" value="9">
+          <div class="hint">9 searches to the end of the game</div>
+        </div>
+        <div class="field">
+          <label for="d2">Player 2 <span style="color:var(--p2)">&#9675;</span>
+            search depth</label>
+          <input type="number" id="d2" min="1" max="9" value="1">
+          <div class="hint">Lower is weaker</div>
+        </div>
+        <div class="field">
+          <label for="delay">Move delay <span id="delayval">120 ms</span></label>
+          <input type="range" id="delay" min="0" max="400" step="20" value="120">
+          <div class="hint">Set to 0 to run the batch instantly</div>
+        </div>
+        <button class="action" id="run">Run 10 games</button>
+        <button class="quiet" id="stop" disabled>Stop</button>
+        <div class="progress"><i id="bar"></i></div>
+      </div>
+
+      <div class="panel">
+        <h2>Scoreboard</h2>
+        <table class="score">
+          <tr><th>Result</th><th class="n">Games</th><th class="n">Share</th></tr>
+          <tr class="r1">
+            <td><span class="glyph">&#10005;</span> Player 1 wins</td>
+            <td class="n" id="w1">0</td><td class="n" id="p1pct">&ndash;</td>
+          </tr>
+          <tr class="r2">
+            <td><span class="glyph">&#9675;</span> Player 2 wins</td>
+            <td class="n" id="w2">0</td><td class="n" id="p2pct">&ndash;</td>
+          </tr>
+          <tr>
+            <td><span class="glyph">&ndash;</span> Draws</td>
+            <td class="n" id="wd">0</td><td class="n" id="dpct">&ndash;</td>
+          </tr>
+        </table>
+        <table class="readout" style="margin-top:14px">
+          <tr><th>Nodes searched, P1</th><td id="n1">&ndash;</td></tr>
+          <tr><th>Nodes searched, P2</th><td id="n2">&ndash;</td></tr>
+          <tr><th>Total time</th><td id="ttime">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Game by game</h2>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h2>What this task shows</h2>
+    <p>Both agents use the same depth-limited alpha-beta search. When both are
+       set to depth 9 they search to the end of the game and play perfectly,
+       and every game is a draw. That is the correct result for 3&times;3
+       tic-tac-toe, not a bug, which is why the depth controls are here:
+       lowering one agent's depth is what produces wins and losses to count.</p>
+    <p>Two details were needed to make a batch of N games meaningful. First,
+       the agents are deterministic, so without intervention all N games would
+       be move for move identical. The search therefore picks at random among
+       moves that share the best exact value, which keeps play optimal while
+       letting games differ. Second, the root search deliberately does not
+       prune between its own candidate moves, because under pruning a score
+       equal to <code>alpha</code> is only an upper bound and treating it as a
+       tie would let a perfect agent choose a losing move.</p>
+    <p>Below depth 9 the search stops early and scores the position with a
+       heuristic: lines still open to a player, weighted by the square of how
+       many marks the player already has in them, minus the same for the
+       opponent.</p>
+  </div>
+
+</div>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

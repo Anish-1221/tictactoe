@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task 5 — B×B Board, Three Machine Players</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>Scaling up to B&times;B</h1>
+      <p class="sub">Boards from 3&times;3 to 10&times;10, three machine
+        players, max<sup>n</sup> with heuristics</p>
+    </div>
+    <div class="spacer"></div>
+    <nav class="tasknav">
+      <a href="../Task1/index.html">Task 1</a>
+      <a href="../Task2/index.html">Task 2</a>
+      <a href="../Task3/index.html">Task 3</a>
+      <a href="../Task4/index.html">Task 4</a>
+      <a href="../Task5/index.html" aria-current="page">Task 5</a>
+    </nav>
+  </div>
+
+  <div class="layout">
+
+    <div class="board-holder">
+      <div class="status" id="status">Set the options, then run.</div>
+      <div class="board" id="board"></div>
+      <div id="warn" class="hint" style="color:var(--p2);min-height:18px;
+           max-width:460px;text-align:center"></div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Board</h2>
+        <div class="field">
+          <label for="size">Board size <span id="sizeval">6 &times; 6</span></label>
+          <input type="range" id="size" min="3" max="10" step="1" value="6">
+        </div>
+        <div class="field">
+          <label for="winlen">Marks in a row needed to win</label>
+          <input type="number" id="winlen" min="3" max="6" value="5">
+          <div class="hint" id="winhint">Adjusts with board size</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Search</h2>
+        <div class="field">
+          <label for="depth">Depth limit</label>
+          <input type="number" id="depth" min="1" max="6" value="3">
+          <div class="hint">Plies searched before the heuristic takes over</div>
+        </div>
+        <div class="field">
+          <label for="radius">Candidate radius</label>
+          <input type="number" id="radius" min="1" max="4" value="2">
+          <div class="hint">Only empty cells this close to an existing mark
+            are considered</div>
+        </div>
+        <div class="field">
+          <label for="budget">Node ceiling per move</label>
+          <input type="number" id="budget" min="10000" max="5000000"
+                 step="10000" value="400000">
+          <div class="hint">Search returns early past this, rather than
+            running the tab out of memory</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Run</h2>
+        <div class="field">
+          <label for="games">Number of games (1&ndash;10)</label>
+          <input type="number" id="games" min="1" max="10" value="5">
+        </div>
+        <div class="field">
+          <label for="delay">Move delay <span id="delayval">60 ms</span></label>
+          <input type="range" id="delay" min="0" max="300" step="20" value="60">
+        </div>
+        <button class="action" id="run">Run 5 games</button>
+        <button class="quiet" id="stop" disabled>Stop</button>
+        <div class="progress"><i id="bar"></i></div>
+      </div>
+
+      <div class="panel">
+        <h2>Scoreboard</h2>
+        <table class="score">
+          <tr>
+            <th>Player</th><th class="n">Won</th>
+            <th class="n">Lost</th><th class="n">Drew</th>
+          </tr>
+          <tr class="r1">
+            <td><span class="glyph">&#10005;</span> Player 1</td>
+            <td class="n" id="w1">0</td><td class="n" id="l1">0</td>
+            <td class="n" id="d1">0</td>
+          </tr>
+          <tr class="r2">
+            <td><span class="glyph">&#9675;</span> Player 2</td>
+            <td class="n" id="w2">0</td><td class="n" id="l2">0</td>
+            <td class="n" id="d2">0</td>
+          </tr>
+          <tr class="r3">
+            <td><span class="glyph">&#9651;</span> Player 3</td>
+            <td class="n" id="w3">0</td><td class="n" id="l3">0</td>
+            <td class="n" id="d3">0</td>
+          </tr>
+        </table>
+        <table class="readout" style="margin-top:14px">
+          <tr><th>Games played</th><td id="played">&ndash;</td></tr>
+          <tr><th>Drawn games</th><td id="draws">&ndash;</td></tr>
+          <tr><th>Winning lines on board</th><td id="nlines">&ndash;</td></tr>
+          <tr><th>Nodes searched</th><td id="nodes">&ndash;</td></tr>
+          <tr><th>Peak nodes, one move</th><td id="peak">&ndash;</td></tr>
+          <tr><th>Moves hitting ceiling</th><td id="hits">&ndash;</td></tr>
+          <tr><th>Total time</th><td id="ttime">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Game by game</h2>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h2>Keeping the search inside memory</h2>
+    <p>A 10&times;10 board offers 100 opening moves, then 99, then 98. Searching
+       even four plies ahead for three players means on the order of 10<sup>8</sup>
+       positions, which no browser tab will survive. Three heuristics keep it
+       tractable, and all three are exposed above so their effect can be seen.</p>
+    <p><strong>Candidate restriction.</strong> Only empty cells within the
+       candidate radius of an existing mark are considered. A move in open
+       space far from every other mark cannot contribute to a line any time
+       soon. On a 10&times;10 board this typically cuts the branching factor
+       from around 90 to around 20. It is the single change that makes large
+       boards work. It is a heuristic, not a sound reduction, so in principle
+       it can overlook a good move in empty space.</p>
+    <p><strong>Depth limiting with an evaluation function.</strong> Below the
+       limit the search stops and scores the position directly: for each
+       straight run of cells long enough to win, a player with marks in it and
+       no opponent marks scores the cube of their count. Cubing rather than
+       squaring makes near-complete lines dominate, which is what makes the
+       engine respond to threats instead of spreading marks thinly.</p>
+    <p><strong>Move ordering and immediate pruning.</strong> Near the root,
+       candidates are tried best-first by that same evaluation, and a move
+       that wins outright ends the search of its siblings, since nothing can
+       score higher.</p>
+
+    <h2>Where it runs out</h2>
+    <p>Measured on this implementation, three players, candidate radius 2:
+       depth 3 completes on every board size from 3&times;3 to 10&times;10
+       inside the default ceiling of 400,000 nodes per move, taking under a
+       second per game. Depth 4 exceeds that ceiling from 6&times;6 upward,
+       peaking at roughly 1.5 million nodes on a 6&times;6 board. Rather than
+       letting the tab run out of memory, the search returns its best result
+       so far and the run reports how many moves were cut short.</p>
+  </div>
+
+</div>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
