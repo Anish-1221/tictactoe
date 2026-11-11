@@ -142,8 +142,8 @@
        already too much for a browser. What keeps it manageable:</p>
     <ul>
       <li><strong>Candidate radius:</strong> only empty cells within this
-          distance of an existing mark are considered. Cuts the moves per turn
-          on 10&times;10 from about 90 to about 20.</li>
+          distance of an existing mark are considered. On 10&times;10 with
+          radius 2 that cuts the moves per turn from about 95 to about 40.</li>
       <li><strong>Move ordering:</strong> wins first, then blocks, then cells
           with the most open paths, so alpha-beta can cut early.</li>
       <li><strong>Depth limit:</strong> past this depth the board is scored
@@ -155,8 +155,8 @@
     </ul>
     <h2>Limits</h2>
     <p>With radius 2 and the default 400,000-node ceiling, depth 4 finishes on
-       every board size up to 10&times;10 (peak around 71,000 nodes for one
-       move, about a second per game on 10&times;10). Depth 5 hits the ceiling
+       every board size up to 10&times;10 (peak around 75,000 nodes for one
+       move, under two seconds per game on 10&times;10). Depth 5 hits the ceiling
        from 6&times;6 up. Switching to max<sup>n</sup> hits it at depth 4 on
        the large boards.</p>
   </div>
