@@ -1,20 +1,15 @@
-/* ===================================================================
-   Task 2 - interface
-   Wires the board and the readout panel to engine.js.
-   =================================================================== */
+// Task 2 page: board, readout panel and move log. Search is in engine.js.
 
 'use strict';
 
 var GLYPH = {};
-GLYPH[HUMAN]   = '✕';   // ✕
-GLYPH[MACHINE] = '○';   // ○
+GLYPH[HUMAN]   = '✕';
+GLYPH[MACHINE] = '○';
 
 var board, gameOver, moveNo, cells;
-var pending = null;   // the machine's scheduled move, so a new game can cancel it
+var pending = null;   // machine move waiting on setTimeout
 
 var el = function (id) { return document.getElementById(id); };
-
-/* --- build the 3x3 grid of buttons once ---------------------------- */
 
 function buildBoard() {
   var host = el('board');
@@ -45,8 +40,6 @@ function paint() {
   }
 }
 
-/* --- status line ---------------------------------------------------- */
-
 function say(html) { el('status').innerHTML = html; }
 
 function finish() {
@@ -57,14 +50,12 @@ function finish() {
   else if (w === MACHINE) say('<span class="who-p2">Machine wins.</span>');
   else                    say('Draw. Correct result against perfect play.');
 
-  paint();                      // paint() rewrites className, so mark after it
+  paint();                      // has to come first, paint() resets className
   var line = winningLine(board);
   for (var i = 0; line && i < line.length; i++) {
     cells[line[i]].classList.add('winning');
   }
 }
-
-/* --- logging --------------------------------------------------------- */
 
 function logLine(text) {
   var box = el('log');
@@ -75,8 +66,6 @@ function logLine(text) {
 function cellName(i) {
   return 'r' + (Math.floor(i / 3) + 1) + 'c' + (i % 3 + 1);
 }
-
-/* --- readout --------------------------------------------------------- */
 
 function showSearch(r) {
   el('ab-nodes').textContent = r.alphaBeta.nodes.toLocaleString();
@@ -97,8 +86,6 @@ function showSearch(r) {
   }
 }
 
-/* --- turns ------------------------------------------------------------ */
-
 function onCellClick(e) {
   if (gameOver) return;
   var i = Number(e.currentTarget.dataset.index);
@@ -112,7 +99,7 @@ function onCellClick(e) {
   if (terminalScore(board, 0) !== null) { finish(); return; }
 
   say('Machine is searching…');
-  // let the browser paint the move before the search blocks the thread
+  // small delay so the human's move shows before the search runs
   pending = setTimeout(machineTurn, 20);
 }
 
@@ -133,11 +120,9 @@ function machineTurn() {
 
 function pad(n) { return (n < 10 ? ' ' : '') + n; }
 
-/* --- new game ---------------------------------------------------------- */
-
 function newGame() {
-  /* Starting a new game while the machine's move is still scheduled would
-     otherwise let that stale move land on the new board as an extra turn. */
+  // cancel a machine move still waiting from the last game, otherwise it
+  // lands on the new board as an extra turn
   if (pending !== null) { clearTimeout(pending); pending = null; }
   board = emptyBoard();
   gameOver = false;

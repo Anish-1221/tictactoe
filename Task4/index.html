@@ -115,44 +115,23 @@
   </div>
 
   <div class="notes">
-    <h2>Alpha-beta with three players</h2>
-    <p>Minimax, and alpha-beta with it, needs two sides whose interests are
-       exactly opposed, so that one number describes the position for both.
-       With three players that is not true as it stands: if player 1 is ahead,
-       players 2 and 3 are both behind, but not equally.</p>
-    <p>The fix used here is the <em>paranoid</em> assumption (Sturtevant and
-       Korf, 2000). The player choosing a move assumes the other two are
-       working together against it. That turns the game back into two sides,
-       &ldquo;me&rdquo; and &ldquo;everyone else&rdquo;, with one number between
-       them: my score. I maximise it on my turns, and on each opponent&rsquo;s
-       turn that opponent minimises it. Minimax applies unchanged, and so does
-       alpha-beta pruning. The assumption is pessimistic, but it is safe: a
-       move that holds up against two co-operating opponents holds up against
-       two independent ones.</p>
-
-    <h2>Which move to try first</h2>
-    <p>Alpha-beta cuts more when good moves are tried early. Moves are ordered
-       by the number of possible paths still open through the cell, meaning
-       the lines through it that no other player has a mark in. A move that
-       completes a line goes first, and a move that blocks another
-       player&rsquo;s line goes next. The ordering only changes the amount of
-       work, never the value of the move chosen.</p>
-
-    <h2>The max<sup>n</sup> option</h2>
-    <p>max<sup>n</sup> (Luckhardt and Irani, 1986) scores every position as a
-       vector with one value per player, and each player picks the move best
-       for itself. It models the players more faithfully, but with no single
-       number there is no alpha and beta to compare, so it cannot prune beyond
-       stopping at an immediate win. Switching the search above shows what
-       alpha-beta saves: on the same positions, max<sup>n</sup> visited between
-       2 and 15 times as many nodes at depths 3 to 6.</p>
-
-    <h2>Why equal depths draw</h2>
-    <p>With three in a row to win and three players defending, every line one
-       player starts can be blocked by either of the other two. At equal search
-       depths every game ends drawn, in every batch at every depth from 2 to 6.
-       Lowering one player&rsquo;s depth makes it miss threats, which is what
-       produces wins and losses for the scoreboard.</p>
+    <h2>About this task</h2>
+    <p>Alpha-beta needs two sides, and with three players there aren't two.
+       So each player searches as if the other two are working together
+       against it (the "paranoid" approach). That gives a single score again,
+       my score, which I maximise and both opponents minimise, and normal
+       alpha-beta works.</p>
+    <p>Moves are tried in this order: a move that wins, then a move that
+       blocks someone else's win, then the rest by number of open paths
+       through the cell.</p>
+    <p>With all three players at the same depth, every game is a draw. With
+       three in a row on a 4&times;4 board, any line one player starts can be
+       blocked by either of the other two. Lower one player's depth to see
+       wins.</p>
+    <p>The max<sup>n</sup> option is there for comparison. It gives every
+       player its own score and lets each one maximise its own, which is more
+       realistic but can't use alpha-beta. On the same positions it searched
+       roughly 2 to 15 times as many nodes.</p>
   </div>
 
 </div>

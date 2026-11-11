@@ -1,13 +1,10 @@
-/* ===================================================================
-   Task 3 - interface
-   Runs N machine-vs-machine games and keeps a scoreboard.
-   =================================================================== */
+// Task 3 page: runs N machine vs machine games and keeps the scoreboard.
 
 'use strict';
 
 var GLYPH = {};
-GLYPH[P1] = '✕';   // ✕
-GLYPH[P2] = '○';   // ○
+GLYPH[P1] = '✕';
+GLYPH[P2] = '○';
 
 var cells, running = false, stopRequested = false;
 var tally = { p1: 0, p2: 0, draw: 0, nodes1: 0, nodes2: 0, ms: 0 };
@@ -16,8 +13,6 @@ var el = function (id) { return document.getElementById(id); };
 var sleep = function (ms) {
   return new Promise(function (r) { setTimeout(r, ms); });
 };
-
-/* --- board ---------------------------------------------------------- */
 
 function buildBoard() {
   var host = el('board');
@@ -47,8 +42,6 @@ function paint(board, lastMove, line) {
     cells[line[j]].classList.add('winning');
   }
 }
-
-/* --- small helpers ---------------------------------------------------- */
 
 function say(html) { el('status').innerHTML = html; }
 
@@ -91,7 +84,7 @@ function showTally() {
   }
 }
 
-/* --- playing one game with the board visible --------------------------- */
+// one game, drawn on the board as it goes
 
 async function playVisibleGame(d1, d2, delay) {
   var board = emptyBoard();
@@ -126,7 +119,7 @@ async function playVisibleGame(d1, d2, delay) {
   };
 }
 
-/* --- the batch ---------------------------------------------------------- */
+// run N games and update the tally after each
 
 async function runBatch() {
   if (running) return;
@@ -180,8 +173,6 @@ async function runBatch() {
   el('run').disabled = false;
   el('stop').disabled = true;
 }
-
-/* --- wiring -------------------------------------------------------------- */
 
 window.addEventListener('DOMContentLoaded', function () {
   buildBoard();

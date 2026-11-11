@@ -135,46 +135,30 @@
   </div>
 
   <div class="notes">
-    <h2>Keeping the search inside memory</h2>
-    <p>A 10&times;10 board offers 100 opening moves, then 99, then 98. Searching
-       even four plies ahead means on the order of 10<sup>8</sup> positions,
-       which no browser tab will survive. The search uses minimax with
-       alpha-beta pruning under the paranoid assumption described on the
-       Task 4 page, and four things keep it tractable. Three of them are
-       exposed above so their effect can be seen.</p>
-    <p><strong>Candidate restriction.</strong> Only empty cells within the
-       candidate radius of an existing mark are considered. A move in open
-       space far from every other mark cannot contribute to a line any time
-       soon. On a 10&times;10 board this cuts the branching factor from around
-       90 to around 20, and it is the single change that makes large boards
-       work. It is a heuristic, not a sound reduction, so in principle it can
-       overlook a good move in empty space.</p>
-    <p><strong>Open paths move ordering.</strong> Moves are tried in order of
-       how many possible paths are still open through the cell: lines through
-       it that no other player has a mark in. Cells near the middle of the
-       board lie on more lines than cells near the edge, so they come first,
-       and the opening move is chosen among the cells with the most paths.
-       Moves that complete or block a line jump the queue. Trying strong moves
-       first is what lets alpha-beta cut off the rest early.</p>
-    <p><strong>Pruning.</strong> Alpha-beta abandons a move as soon as it is
-       shown that the player choosing at the parent would never allow it, and
-       any node stops searching once a move wins on the spot, since nothing can
-       beat that. Both are exact and never change the move chosen.</p>
-    <p><strong>Depth limit with an evaluation function.</strong> Below the
-       limit the search stops and scores the position directly: for each run
-       of three cells, a player with marks in it and no opponent marks scores
-       the cube of their count, so an open line holding two marks scores 8
-       against 1 for a line holding one. That steep rise is what makes the
-       engine take threats seriously.</p>
-
-    <h2>Where it runs out</h2>
-    <p>Measured on this implementation, three players, candidate radius 2:
-       depth 4 completes on every board size from 3&times;3 to 10&times;10
-       inside the default ceiling of 400,000 nodes per move, peaking at about
-       71,000 nodes for one move on a 10&times;10 board and taking around a
-       second per game. Depth 5 exceeds the ceiling from 6&times;6 upward.
-       Rather than letting the tab run out of memory, the search returns its
-       best result so far and the run reports how many moves were cut short.</p>
+    <h2>About this task</h2>
+    <p>Same engine as Task 4 (paranoid alpha-beta, three players, three in a
+       row), on boards from 3&times;3 up to 10&times;10. A 10&times;10 board has
+       about 100 possible moves per turn, so a few plies of full search is
+       already too much for a browser. What keeps it manageable:</p>
+    <ul>
+      <li><strong>Candidate radius:</strong> only empty cells within this
+          distance of an existing mark are considered. Cuts the moves per turn
+          on 10&times;10 from about 90 to about 20.</li>
+      <li><strong>Move ordering:</strong> wins first, then blocks, then cells
+          with the most open paths, so alpha-beta can cut early.</li>
+      <li><strong>Depth limit:</strong> past this depth the board is scored
+          directly. Each open line is worth (marks in it)<sup>3</sup>, so two
+          in a line counts for much more than two scattered marks.</li>
+      <li><strong>Node ceiling:</strong> if one move's search goes past this
+          many nodes, it stops and returns the best move found so far instead
+          of running the browser out of memory.</li>
+    </ul>
+    <h2>Limits</h2>
+    <p>With radius 2 and the default 400,000-node ceiling, depth 4 finishes on
+       every board size up to 10&times;10 (peak around 71,000 nodes for one
+       move, about a second per game on 10&times;10). Depth 5 hits the ceiling
+       from 6&times;6 up. Switching to max<sup>n</sup> hits it at depth 4 on
+       the large boards.</p>
   </div>
 
 </div>

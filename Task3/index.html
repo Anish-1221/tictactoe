@@ -92,29 +92,20 @@
   </div>
 
   <div class="notes">
-    <h2>What this task shows</h2>
-    <p>Both agents use the same depth-limited alpha-beta search. When both are
-       set to depth 9 they search to the end of the game and play perfectly,
-       and every game is a draw. That is the correct result for 3&times;3
-       tic-tac-toe, not a bug, which is why the depth controls are here:
-       lowering one agent's depth is what produces wins and losses to count.</p>
-    <p>Two details were needed to make a batch of N games meaningful. First,
-       the agents are deterministic, so without intervention all N games would
-       be move for move identical. The search therefore picks at random among
-       moves that share the best exact value, which keeps play optimal while
-       letting games differ. Second, the root search deliberately does not
-       prune between its own candidate moves, because under pruning a score
-       equal to <code>alpha</code> is only an upper bound and treating it as a
-       tie would let a perfect agent choose a losing move.</p>
-    <p>Below depth 9 the search stops early and scores the position with a
-       heuristic: lines still open to a player, weighted by the square of how
-       many marks the player already has in them, minus the same for the
+    <h2>About this task</h2>
+    <p>Two machine players, both using depth-limited alpha-beta with the same
+       move ordering as Task 2. At depth 9 a player searches to the end of the
+       game and plays perfectly, so two depth-9 players draw every time. That's
+       expected for 3&times;3. Lower one player's depth to get wins and losses.</p>
+    <p>Below depth 9 the search stops early and scores the board with a
+       heuristic: for each line with none of the opponent's marks, add the
+       square of the player's marks in it, then subtract the same for the
        opponent.</p>
-    <p>Inside the search, moves are tried in order of how many possible paths
-       are still open through the cell, the same ordering as Task 2: the
-       centre (4 lines) before the corners (3) before the edges (2), counting
-       only lines the opponent has not blocked. Trying strong moves first lets
-       alpha-beta cut off more of the tree without changing any result.</p>
+    <p>Equally good moves are picked at random, otherwise all N games would
+       be identical. At the root, every move is searched with a full window so
+       that ties are real ties: under pruning, a score equal to
+       <code>alpha</code> only means "no better", and treating those as ties
+       made a depth-9 player lose games.</p>
   </div>
 
 </div>

@@ -1,16 +1,12 @@
-/* ===================================================================
-   Task 3 - engine
-   3x3 tic-tac-toe, two machine players, alpha-beta pruning,
-   with a search depth limit and a heuristic for cut-off leaves.
-
-   Pure logic, no DOM.
-   =================================================================== */
+// Task 3: 3x3 tic-tac-toe, machine vs machine.
+// Alpha-beta with a depth limit; a heuristic scores positions where the
+// limit stops the search. No DOM in here.
 
 'use strict';
 
 var EMPTY = 0;
-var P1 = 1;          // plays ✕, moves first
-var P2 = 2;          // plays ○
+var P1 = 1;          // X, moves first
+var P2 = 2;          // O
 
 var LINES = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -55,14 +51,8 @@ function isFull(board) {
   return true;
 }
 
-/* --- move ordering: the open paths heuristic ---------------------------
-   Same as Task 2. Moves are tried in order of how many lines through the
-   cell are still open to the player moving, so the centre (4 lines) comes
-   before the corners (3) and the edges (2). Good moves found early tighten
-   alpha and beta sooner, which is what lets alpha-beta cut more. The
-   ordering never changes a move's value, only the work spent finding it.
-   ---------------------------------------------------------------------- */
-
+// Move ordering, same as Task 2: cells with more open paths (lines the
+// opponent hasn't blocked) get searched first. Centre, corners, edges.
 var LINES_THROUGH = [];
 (function () {
   for (var c = 0; c < 9; c++) LINES_THROUGH.push([]);
@@ -89,18 +79,10 @@ function orderedMoves(board, player) {
   return moves.sort(function (a, b) { return key[b] - key[a] || a - b; });
 }
 
-/* --- heuristic for positions the search stops at ---------------------
-   Reached only when the depth limit cuts the search off before a
-   terminal position. A line still open to a player is one that holds
-   none of the opponent's marks. Lines are weighted by how many marks
-   the player already has in them, squared, so two in a row counts for
-   much more than one.
-
-   The result is divided by 10 to keep it inside the range used by
-   terminal scores, so a heuristic guess can never outrank a real win
-   or be mistaken for a real loss.
-   ------------------------------------------------------------------ */
-
+// Heuristic for when the depth limit is hit. For every line with none of
+// the opponent's marks, add (my marks in it)^2, and the same the other
+// way round. Divided by 10 so it always stays between a real loss and a
+// real win (those are +/-(10 - depth)).
 function heuristic(board, forPlayer) {
   var mine = 0, theirs = 0;
   var opp = other(forPlayer);
@@ -118,10 +100,7 @@ function heuristic(board, forPlayer) {
   return (mine - theirs) / 10;
 }
 
-/* --- scoring ----------------------------------------------------------
-   Always from the point of view of the player the search is run for.
-   -------------------------------------------------------------------- */
-
+// scores are from forPlayer's point of view
 function terminalScore(board, depth, forPlayer) {
   var w = winnerOf(board);
   if (w === forPlayer)        return 10 - depth;
@@ -130,13 +109,9 @@ function terminalScore(board, depth, forPlayer) {
   return null;
 }
 
-/* --- depth limited alpha-beta ------------------------------------------
-   maxDepth of 9 or more searches to the end of the game, which is
-   perfect play on a 3x3 board. Smaller values make a weaker opponent,
-   which is what lets this task produce wins and losses rather than an
-   unbroken run of draws.
-   ---------------------------------------------------------------------- */
-
+// Depth-limited alpha-beta. maxDepth 9 = searches to the end (perfect
+// play). Lower depths give a weaker player, which is how the batch gets
+// wins and losses instead of all draws.
 function alphabeta(board, toMove, forPlayer, depth, maxDepth, alpha, beta, counter) {
   counter.nodes++;
 
@@ -175,19 +150,11 @@ function alphabeta(board, toMove, forPlayer, depth, maxDepth, alpha, beta, count
   return worst;
 }
 
-/* --- root search --------------------------------------------------------
-   The root is handled separately and deliberately does NOT prune between
-   its own children: each candidate move is searched with a full
-   (-inf, +inf) window so that every one comes back with an exact value.
-
-   This matters. Inside a pruned search a child that returns a score equal
-   to alpha has only been shown to be no better than alpha; its true value
-   may be worse. Treating such a score as a tie and then picking from the
-   tied set at random would let a supposedly perfect player choose a losing
-   move. Pruning still applies in every subtree below the root, which is
-   where nearly all of the saving comes from anyway.
-   ---------------------------------------------------------------------- */
-
+// Root search. Each root move gets a full (-inf, inf) window on purpose.
+// With pruning between root moves, a move that comes back equal to alpha
+// is only known to be "no better", not an actual tie, and picking randomly
+// among those let a depth-9 player choose losing moves (that was a real
+// bug, 9 vs 9 stopped drawing). Pruning still happens below the root.
 function rootSearch(board, player, maxDepth, counter) {
   var moves = legalMoves(board);
   var best = -Infinity;
@@ -203,11 +170,8 @@ function rootSearch(board, player, maxDepth, counter) {
     else if (score === best) { bestMoves.push(moves[i]); }
   }
 
-  /* Both agents are deterministic, so without random tie breaking every
-     game in a batch of N would be move for move identical and the
-     scoreboard would read N of whatever the first game was. Choosing at
-     random among moves of equal exact value keeps play optimal while
-     letting the games differ. */
+  // random pick among equally good moves, otherwise every game in a batch
+  // would be exactly the same
   return {
     move: bestMoves[(Math.random() * bestMoves.length) | 0],
     score: best,
@@ -229,11 +193,7 @@ function chooseMove(board, player, maxDepth) {
   };
 }
 
-/* --- one complete game, played out with no interface involved ----------
-   Returns the winner (P1, P2 or 0 for a draw), the move list, and the
-   total nodes each agent searched.
-   ---------------------------------------------------------------------- */
-
+// Plays one full game without the page (used for testing).
 function playGame(depthP1, depthP2) {
   var board = emptyBoard();
   var toMove = P1;

@@ -1,18 +1,15 @@
-/* ===================================================================
-   Task 4 - interface
-   4x4 board, three machine players, three in a row to win, N games,
-   scoreboard. The search lives in engine.js; this file only drives it.
-   =================================================================== */
+// Task 4 page: 4x4 board, 3 machine players, 3 in a row, N games.
+// Search is in engine.js.
 
 'use strict';
 
 var BOARD_SIZE = 4;
-var WIN_LENGTH = 3;          // three in a row, column or diagonal
+var WIN_LENGTH = 3;
 var PLAYERS = 3;
-var RADIUS = 2;              // candidate moves within 2 cells of a mark
-var NODE_BUDGET = 400000;    // per move; see the warning handling below
+var RADIUS = 2;              // only consider cells within 2 of a mark
+var NODE_BUDGET = 400000;    // max nodes per move
 
-var GLYPH = { 1: '✕', 2: '○', 3: '△' };   // ✕ ○ △
+var GLYPH = { 1: '✕', 2: '○', 3: '△' };
 var CLS   = { 1: 'p1', 2: 'p2', 3: 'p3' };
 var METHOD_NAME = { alphabeta: 'alpha-beta', maxn: 'maxⁿ' };
 
@@ -23,8 +20,6 @@ var el = function (id) { return document.getElementById(id); };
 var sleep = function (ms) {
   return new Promise(function (r) { setTimeout(r, ms); });
 };
-
-/* --- board ------------------------------------------------------------ */
 
 function buildBoard() {
   var host = el('board');
@@ -55,8 +50,6 @@ function paint(board, lastMove, line) {
   }
 }
 
-/* --- scoreboard -------------------------------------------------------- */
-
 function resetTally() {
   tally = { played: 0, draws: 0, nodes: 0, moves: 0, cutoffs: 0, ms: 0,
             won: [0, 0, 0, 0] };
@@ -73,7 +66,7 @@ function resetTally() {
 function showTally(method) {
   for (var p = 1; p <= PLAYERS; p++) {
     var won = tally.won[p];
-    var lost = tally.played - tally.draws - won;   // someone else won
+    var lost = tally.played - tally.draws - won;
     el('w' + p).textContent = won;
     el('l' + p).textContent = lost;
     el('dr' + p).textContent = tally.draws;
@@ -88,8 +81,6 @@ function showTally(method) {
   el('ttime').textContent   = tally.ms.toFixed(0) + ' ms';
 }
 
-/* --- helpers ----------------------------------------------------------- */
-
 function say(html) { el('status').innerHTML = html; }
 
 function logLine(text) {
@@ -101,8 +92,6 @@ function logLine(text) {
 function readDepth(id) {
   return Math.max(1, Math.min(7, Number(el(id).value) || 5));
 }
-
-/* --- one game, played on screen ---------------------------------------- */
 
 async function playVisibleGame(depths, method, delay) {
   var board = emptyBoard(game);
@@ -139,8 +128,6 @@ async function playVisibleGame(depths, method, delay) {
     toMove = nextPlayer(game, toMove);
   }
 }
-
-/* --- the batch ---------------------------------------------------------- */
 
 async function runBatch() {
   if (running) return;
@@ -203,8 +190,6 @@ async function runBatch() {
   el('run').disabled = false;
   el('stop').disabled = true;
 }
-
-/* --- wiring -------------------------------------------------------------- */
 
 window.addEventListener('DOMContentLoaded', function () {
   game = createGame(BOARD_SIZE, WIN_LENGTH, PLAYERS);

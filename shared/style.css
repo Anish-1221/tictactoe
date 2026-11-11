@@ -387,6 +387,8 @@ button.quiet:hover { background: var(--panel-sunk); }
 
 .notes h2 { font-size: 15px; color: var(--ink); margin: 0 0 8px; }
 .notes p { margin: 0 0 10px; }
+.notes ul { margin: 0 0 12px; padding-left: 20px; }
+.notes li { margin-bottom: 6px; }
 .notes code {
   font-family: var(--mono);
   font-size: 13px;

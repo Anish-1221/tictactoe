@@ -1,37 +1,23 @@
-/* ===================================================================
-   Task 2 - engine
-   3x3 tic-tac-toe, two players, minimax with alpha-beta pruning.
-
-   This file is pure game logic. It touches no DOM, so it can be
-   reasoned about (and tested) on its own. app.js does the interface.
-   =================================================================== */
+// Task 2: 3x3 tic-tac-toe, human vs machine, minimax with alpha-beta.
+// Game logic only, no DOM. app.js handles the page.
 
 'use strict';
 
-/* --- board representation ------------------------------------------
-   A board is a flat array of 9 cells, read left to right, top to
-   bottom. Each cell holds EMPTY, HUMAN or MACHINE.
-
-        0 | 1 | 2
-        --+---+--
-        3 | 4 | 5
-        --+---+--
-        6 | 7 | 8
-   ------------------------------------------------------------------ */
-
+// Board is a flat array of 9 cells:
+//   0 1 2
+//   3 4 5
+//   6 7 8
 var EMPTY   = 0;
-var HUMAN   = 1;   // plays X, maximising is NOT their job: they minimise
-var MACHINE = 2;   // plays O, the maximising player
+var HUMAN   = 1;   // X, minimising
+var MACHINE = 2;   // O, maximising
 
-/* The eight ways to make three in a row. */
 var LINES = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],   // rows
   [0, 3, 6], [1, 4, 7], [2, 5, 8],   // columns
   [0, 4, 8], [2, 4, 6]               // diagonals
 ];
 
-/* For each cell, the lines that pass through it. The centre is on 4
-   lines, each corner on 3 and each edge on 2. */
+// lines passing through each cell (centre 4, corners 3, edges 2)
 var LINES_THROUGH = [];
 (function () {
   for (var c = 0; c < 9; c++) LINES_THROUGH.push([]);
@@ -44,7 +30,7 @@ function emptyBoard() {
   return [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY];
 }
 
-/* Returns HUMAN, MACHINE, or 0 if nobody has won yet. */
+// HUMAN, MACHINE, or 0 if no one has won
 function winnerOf(board) {
   for (var i = 0; i < LINES.length; i++) {
     var a = LINES[i][0], b = LINES[i][1], c = LINES[i][2];
@@ -55,7 +41,7 @@ function winnerOf(board) {
   return 0;
 }
 
-/* The three cells that won, or null. Used only to highlight them. */
+// the winning three cells (for highlighting), or null
 function winningLine(board) {
   for (var i = 0; i < LINES.length; i++) {
     var a = LINES[i][0], b = LINES[i][1], c = LINES[i][2];
@@ -81,19 +67,10 @@ function isFull(board) {
   return true;
 }
 
-/* --- move ordering: the open paths heuristic -------------------------
-   Alpha-beta prunes more when the best move is tried first, because a
-   good early result tightens alpha or beta and lets later siblings be
-   cut off sooner. The pruning stays exact either way; only the amount
-   of work changes.
-
-   The ordering used here tries first the cell with the most possible
-   paths still to be explored: the number of lines through the cell
-   that the opponent has not yet blocked. On an empty board that puts
-   the centre (4 paths) first, then the corners (3), then the edges (2).
-   Ties keep their board order, so the search stays deterministic.
-   ------------------------------------------------------------------ */
-
+// Move ordering. Alpha-beta cuts more if good moves come first, so try
+// the cells with the most open paths first, i.e. lines through the cell
+// the opponent hasn't blocked yet. On an empty board: centre, corners,
+// then edges. Doesn't change the result, just the number of nodes.
 function openPaths(board, cell, player) {
   var opp = other(player);
   var lines = LINES_THROUGH[cell];
@@ -112,34 +89,19 @@ function orderedMoves(board, player) {
   return moves.sort(function (a, b) { return key[b] - key[a] || a - b; });
 }
 
-/* --- scoring --------------------------------------------------------
-   Terminal positions are scored from the MACHINE's point of view:
-
-       machine wins  ->  +10
-       human wins    ->  -10
-       draw          ->    0
-
-   The depth at which the win was found is subtracted from (or added
-   to) the magnitude. Without this the engine is indifferent between
-   winning now and winning in three more moves, which looks like it is
-   toying with you. With it, a win at depth 1 scores 9 and a win at
-   depth 5 scores 5, so the shortest win is preferred and the longest
-   loss is preferred when losing is unavoidable.
-   ------------------------------------------------------------------ */
-
+// Scored from the machine's side: +10 win, -10 loss, 0 draw. Depth is
+// taken off so a faster win scores higher (and a slower loss is preferred
+// when the machine can't avoid losing).
 function terminalScore(board, depth) {
   var w = winnerOf(board);
   if (w === MACHINE) return 10 - depth;
   if (w === HUMAN)   return depth - 10;
   if (isFull(board)) return 0;
-  return null;            // not a terminal position
+  return null;            // game not over
 }
 
-/* --- plain minimax --------------------------------------------------
-   Kept so Task 2 can show, on every move, how many nodes the search
-   would have visited without pruning. It is not used to pick moves.
-   ------------------------------------------------------------------ */
-
+// Plain minimax, no pruning. Only used to show how many nodes it would
+// take; the machine's move always comes from alphabeta() below.
 function minimax(board, player, depth, counter) {
   counter.nodes++;
 
@@ -166,24 +128,13 @@ function minimax(board, player, depth, counter) {
   return { move: bestMove, score: bestScore };
 }
 
-/* --- minimax with alpha-beta pruning --------------------------------
-   Same answer as minimax, fewer nodes visited.
-
-   alpha = the best score the maximising player can already guarantee
-           somewhere higher up the tree.
-   beta  = the best score the minimising player can already guarantee.
-
-   If at any point alpha >= beta, the player who is choosing at the
-   parent node would never let play reach this position, because they
-   already have a line that is at least as good. The remaining siblings
-   cannot change the parent's decision, so we stop looking at them.
-   That abandoned work is a cutoff, counted below.
-
-   `ordered` switches the open paths move ordering on or off. The move
-   is always chosen with it on; the off setting exists only so the page
-   can show how much of the saving comes from the ordering.
-   ------------------------------------------------------------------ */
-
+// Minimax with alpha-beta pruning.
+// alpha = best the machine is already guaranteed higher up the tree
+// beta  = best the human is already guaranteed
+// Once alpha >= beta, the parent will never pick this branch, so the
+// remaining moves here can be skipped (a cutoff).
+// `ordered` turns the move ordering on/off. The real move always uses
+// ordering; the unordered run is only there for the comparison readout.
 function alphabeta(board, player, depth, alpha, beta, counter, ordered) {
   counter.nodes++;
 
@@ -236,13 +187,9 @@ function other(player) {
   return player === MACHINE ? HUMAN : MACHINE;
 }
 
-/* --- the call the interface makes -----------------------------------
-   Runs alpha-beta with open paths ordering to choose the move. When
-   asked to compare, it then runs alpha-beta without the ordering and
-   plain minimax on the same position, purely to report what each one
-   saved. Those two extra searches never affect the move.
-   ------------------------------------------------------------------ */
-
+// Called by the page. Picks the move with ordered alpha-beta. If compare
+// is on, also runs unordered alpha-beta and plain minimax on the same
+// board just to report their node counts.
 function chooseMove(board, player, compare) {
   var abCount = { nodes: 0, cutoffs: 0, skipped: 0 };
   var t0 = performance.now();

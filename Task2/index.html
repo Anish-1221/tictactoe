@@ -73,30 +73,23 @@
   </div>
 
   <div class="notes">
-    <h2>What this task shows</h2>
-    <p>Alpha-beta pruning returns a move of exactly the same value as plain
-       minimax but visits far fewer positions. From an empty board the
-       unpruned search explores 549,946 nodes. Alpha-beta with the moves
-       taken in board order needs 20,866, and with the open paths ordering
-       described below it needs 6,347, which avoids 98.8% of the work. All
-       three figures are reported above on every move so the saving is
-       visible rather than asserted.</p>
-    <p>The pruning rule: during the search each side tracks the best score it
-       can already guarantee elsewhere, called <code>alpha</code> for the
-       maximising player and <code>beta</code> for the minimising one. When
-       <code>alpha &gt;= beta</code> the player choosing at the parent node
-       would never allow play to reach the current position, so the remaining
-       sibling moves cannot affect the outcome and are abandoned. Each
-       abandonment is counted as a cutoff.</p>
-    <h2>Which move to try first</h2>
-    <p>How much alpha-beta prunes depends on the order the moves are tried
-       in: finding a strong move early tightens the bounds sooner. The
-       search here tries first the cell with the most possible paths still
-       open, meaning the lines through that cell the opponent has not yet
-       blocked. On an empty board the centre lies on 4 lines, each corner on
-       3 and each edge on 2, so the centre is searched first. The ordering
-       changes only how much work is done, never the value of the move.</p>
-    <p>The machine plays perfectly, so the best you can get is a draw.</p>
+    <h2>About this task</h2>
+    <p>Same game as Task 1, but the machine uses alpha-beta pruning instead of
+       plain minimax. It picks a move of the same value while looking at far
+       fewer positions. With the compare box ticked, every machine move also
+       runs alpha-beta without move ordering and plain minimax on the same
+       board, so all three node counts can be compared. From an empty board:
+       549,946 for minimax, 20,866 for alpha-beta, 6,347 for alpha-beta with
+       ordering.</p>
+    <p>Pruning: <code>alpha</code> is the best score the machine can already
+       get elsewhere in the tree, <code>beta</code> the best the human can.
+       Once <code>alpha &gt;= beta</code>, the parent would never choose this
+       branch, so the rest of its moves are skipped. Each skip is a cutoff.</p>
+    <p>Move ordering: cells are tried in order of how many open paths run
+       through them, i.e. lines the opponent hasn't blocked. On an empty board
+       that's the centre (4), then corners (3), then edges (2). Good moves
+       early means more cutoffs.</p>
+    <p>The machine plays perfectly, so a draw is the best you can do.</p>
   </div>
 
 </div>

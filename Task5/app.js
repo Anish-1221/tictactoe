@@ -1,16 +1,13 @@
-/* ===================================================================
-   Task 5 - interface
-   B x B board for B = 3..10, three machine players, three in a row to
-   win, N games. Same engine as Task 4; what changes is that the board
-   size and the search heuristics are under the user's control.
-   =================================================================== */
+// Task 5 page: B x B board (3 to 10), 3 machine players, 3 in a row.
+// Same engine as Task 4, but board size and search settings are
+// exposed as controls.
 
 'use strict';
 
 var PLAYERS = 3;
-var WIN_LENGTH = 3;          // three in a row, column or diagonal, any size
+var WIN_LENGTH = 3;          // same on every board size
 
-var GLYPH = { 1: '✕', 2: '○', 3: '△' };   // ✕ ○ △
+var GLYPH = { 1: '✕', 2: '○', 3: '△' };
 var CLS   = { 1: 'p1', 2: 'p2', 3: 'p3' };
 var METHOD_NAME = { alphabeta: 'alpha-beta', maxn: 'maxⁿ' };
 
@@ -21,8 +18,6 @@ var el = function (id) { return document.getElementById(id); };
 var sleep = function (ms) {
   return new Promise(function (r) { setTimeout(r, ms); });
 };
-
-/* --- board ------------------------------------------------------------- */
 
 function buildBoard(B) {
   var host = el('board');
@@ -56,8 +51,6 @@ function paint(board, lastMove, line) {
   }
 }
 
-/* --- settings ------------------------------------------------------------ */
-
 function currentSettings() {
   return {
     B: Number(el('size').value),
@@ -78,8 +71,6 @@ function applyBoardSize() {
   paint(emptyBoard(game), -1, null);
   el('nlines').textContent = game.lines.length.toLocaleString();
 }
-
-/* --- scoreboard ---------------------------------------------------------- */
 
 function resetTally() {
   tally = { played: 0, draws: 0, nodes: 0, ms: 0, peak: 0, hits: 0,
@@ -118,8 +109,6 @@ function logLine(text) {
   box.scrollTop = box.scrollHeight;
 }
 
-/* --- one game ------------------------------------------------------------ */
-
 async function playVisibleGame(s) {
   var board = emptyBoard(game);
   var toMove = 1;
@@ -141,7 +130,7 @@ async function playVisibleGame(s) {
 
     paint(board, r.move, null);
     if (s.delay > 0) await sleep(s.delay);
-    else await sleep(0);                          // let the board repaint
+    else await sleep(0);                          // still let the board repaint
 
     if (checkWinAt(game, board, r.move)) {
       var found = findWinningLine(game, board);
@@ -156,8 +145,6 @@ async function playVisibleGame(s) {
     toMove = nextPlayer(game, toMove);
   }
 }
-
-/* --- batch ---------------------------------------------------------------- */
 
 async function runBatch() {
   if (running) return;
@@ -219,8 +206,6 @@ async function runBatch() {
   el('run').disabled = false;
   el('stop').disabled = true;
 }
-
-/* --- wiring ---------------------------------------------------------------- */
 
 window.addEventListener('DOMContentLoaded', function () {
   applyBoardSize();
