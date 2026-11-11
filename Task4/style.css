@@ -1,9 +1,8 @@
-/* ---------------------------------------------------------------
-   Shared visual language for all five tasks.
-   Plain CSS, no build step, no webfonts, works offline from file://
-   --------------------------------------------------------------- */
+/* Shared styles for Tasks 2 to 5 (Task 1 keeps its original CSS).
+   Copied into each task folder so each one works on its own. */
 
 :root {
+  color-scheme: light dark;
   --ground:      #eef1f4;
   --panel:       #ffffff;
   --panel-sunk:  #f6f8fa;

@@ -134,7 +134,7 @@ async function runBatch() {
   var delay = Number(el('delay').value);
 
   resetTally();
-  logLine('game  winner    moves  nodes P1   nodes P2');
+  logLine(' #  winner moves  P1 nodes  P2 nodes');
 
   for (var g = 1; g <= n; g++) {
     say('Game ' + g + ' of ' + n + '…');
@@ -152,12 +152,12 @@ async function runBatch() {
     tally.ms += res.ms;
 
     var filled = res.cells.filter(function (c) { return c !== EMPTY; }).length;
-    var name = res.winner === P1 ? 'P1 ✕  ' :
-               res.winner === P2 ? 'P2 ○  ' : 'draw   ';
-    logLine(String(g).padStart(4) + '  ' + name + '  ' +
-            String(filled).padStart(5) + '  ' +
-            String(res.nodes1).padStart(8) + '  ' +
-            String(res.nodes2).padStart(9));
+    var name = res.winner === P1 ? 'P1 ✕' :
+               res.winner === P2 ? 'P2 ○' : 'draw';
+    logLine(String(g).padStart(2) + '  ' + name.padEnd(6) +
+            String(filled).padStart(6) +
+            String(res.nodes1).padStart(10) +
+            String(res.nodes2).padStart(10));
 
     showTally();
     if (delay > 0 && g < n) await sleep(delay * 3);

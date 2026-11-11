@@ -143,9 +143,8 @@ async function runBatch() {
   var delay = Number(el('delay').value);
 
   resetTally();
-  logLine('search: ' + METHOD_NAME[method] + ', depths ' +
-          depths.slice(1).join('/'));
-  logLine('game  winner  plies     nodes');
+  logLine(METHOD_NAME[method] + ', depths ' + depths.slice(1).join('/'));
+  logLine(' #  winner plies     nodes');
 
   var anyBudgetHit = false;
 
@@ -165,11 +164,11 @@ async function runBatch() {
     else tally.won[res.winner]++;
     if (res.budgetHit) anyBudgetHit = true;
 
-    var name = res.winner === 0 ? 'draw  '
-             : 'P' + res.winner + ' ' + GLYPH[res.winner] + '  ';
-    logLine(String(g).padStart(4) + '  ' + name + '  ' +
-            String(res.plies).padStart(5) + '  ' +
-            String(res.nodes).padStart(8));
+    var name = res.winner === 0 ? 'draw'
+             : 'P' + res.winner + ' ' + GLYPH[res.winner];
+    logLine(String(g).padStart(2) + '  ' + name.padEnd(6) +
+            String(res.plies).padStart(6) +
+            String(res.nodes).padStart(10));
 
     showTally(method);
     if (delay > 0 && g < n) await sleep(delay * 3);

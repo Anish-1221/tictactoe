@@ -160,9 +160,8 @@ async function runBatch() {
   el('nlines').textContent = game.lines.length.toLocaleString();
 
   resetTally();
-  logLine('search: ' + METHOD_NAME[s.method] + ', depth ' + s.depth +
-          ', radius ' + s.radius);
-  logLine('game  winner  plies      nodes   peak/move');
+  logLine(METHOD_NAME[s.method] + ', depth ' + s.depth + ', radius ' + s.radius);
+  logLine(' #  winner plies     nodes     peak');
 
   for (var g = 1; g <= s.games; g++) {
     say('Game ' + g + ' of ' + s.games + ' on ' + s.B + '×' + s.B + '…');
@@ -179,12 +178,12 @@ async function runBatch() {
     if (res.winner === 0) tally.draws++;
     else tally.won[res.winner]++;
 
-    var name = res.winner === 0 ? 'draw  '
-             : 'P' + res.winner + ' ' + GLYPH[res.winner] + '  ';
-    logLine(String(g).padStart(4) + '  ' + name + '  ' +
-            String(res.plies).padStart(5) + '  ' +
-            String(res.nodes).padStart(9) + '  ' +
-            String(res.peak).padStart(10));
+    var name = res.winner === 0 ? 'draw'
+             : 'P' + res.winner + ' ' + GLYPH[res.winner];
+    logLine(String(g).padStart(2) + '  ' + name.padEnd(6) +
+            String(res.plies).padStart(6) +
+            String(res.nodes).padStart(10) +
+            String(res.peak).padStart(9));
 
     showTally(s.method);
     if (s.delay > 0 && g < s.games) await sleep(s.delay * 3);
