@@ -10,6 +10,7 @@ GLYPH[HUMAN]   = '✕';   // ✕
 GLYPH[MACHINE] = '○';   // ○
 
 var board, gameOver, moveNo, cells;
+var pending = null;   // the machine's scheduled move, so a new game can cancel it
 
 var el = function (id) { return document.getElementById(id); };
 
@@ -86,9 +87,11 @@ function showSearch(r) {
 
   if (r.plain) {
     var saved = 100 * (1 - r.alphaBeta.nodes / r.plain.nodes);
+    el('un-nodes').textContent = r.unordered.nodes.toLocaleString();
     el('mm-nodes').textContent = r.plain.nodes.toLocaleString();
     el('saved').textContent    = saved.toFixed(1) + '%';
   } else {
+    el('un-nodes').textContent = 'not run';
     el('mm-nodes').textContent = 'not run';
     el('saved').textContent    = '–';
   }
@@ -110,10 +113,11 @@ function onCellClick(e) {
 
   say('Machine is searching…');
   // let the browser paint the move before the search blocks the thread
-  setTimeout(machineTurn, 20);
+  pending = setTimeout(machineTurn, 20);
 }
 
 function machineTurn() {
+  pending = null;
   var r = chooseMove(board, MACHINE, el('compare').checked);
   board[r.move] = MACHINE;
   moveNo++;
@@ -132,17 +136,20 @@ function pad(n) { return (n < 10 ? ' ' : '') + n; }
 /* --- new game ---------------------------------------------------------- */
 
 function newGame() {
+  /* Starting a new game while the machine's move is still scheduled would
+     otherwise let that stale move land on the new board as an extra turn. */
+  if (pending !== null) { clearTimeout(pending); pending = null; }
   board = emptyBoard();
   gameOver = false;
   moveNo = 0;
   el('log').textContent = '';
-  ['ab-nodes', 'mm-nodes', 'saved', 'cutoffs', 'skipped', 'ms', 'score']
+  ['ab-nodes', 'un-nodes', 'mm-nodes', 'saved', 'cutoffs', 'skipped', 'ms', 'score']
     .forEach(function (id) { el(id).textContent = '–'; });
   paint();
 
   if (el('first').value === 'machine') {
     say('Machine is searching…');
-    setTimeout(machineTurn, 20);
+    pending = setTimeout(machineTurn, 20);
   } else {
     say('Your move.');
   }

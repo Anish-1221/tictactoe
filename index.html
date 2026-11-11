@@ -36,15 +36,16 @@
   <div class="masthead">
     <div>
       <h1>Tic-tac-toe for N players</h1>
-      <p class="sub">CS 6364 project &mdash; minimax, alpha-beta pruning and
-        max<sup>n</sup></p>
+      <p class="sub">CS 6364 project: minimax and alpha-beta pruning, from
+        two players to three</p>
     </div>
   </div>
 
   <p class="lede">Five implementations, from the two-player 3&times;3 game
      solved exhaustively by minimax up to a 10&times;10 board played by three
-     machine players. Plain HTML, CSS and JavaScript throughout: no build
-     step and no server.</p>
+     machine players. On every board, three in a row, a column or a diagonal
+     wins. Plain HTML, CSS and JavaScript throughout: no build step and no
+     server.</p>
 
   <div class="tasks">
     <a href="Task1/index.html">
@@ -58,8 +59,8 @@
       <span class="no">Task 2</span>
       <span>
         <h2>Alpha-beta pruning</h2>
-        <p>Same game, same moves, 96% fewer nodes. Both counts shown on every
-           move.</p>
+        <p>Same game, 98.8% fewer nodes, with moves ordered by how many open
+           paths run through each cell. All three counts shown on every move.</p>
       </span>
     </a>
     <a href="Task3/index.html">
@@ -74,16 +75,16 @@
       <span class="no">Task 4</span>
       <span>
         <h2>Three players on 4&times;4</h2>
-        <p>Minimax does not generalise past two players, so this uses
-           max<sup>n</sup>.</p>
+        <p>Alpha-beta with three players, each assuming the other two are
+           against it. max<sup>n</sup> available for comparison.</p>
       </span>
     </a>
     <a href="Task5/index.html">
       <span class="no">Task 5</span>
       <span>
         <h2>Scaling to B&times;B</h2>
-        <p>Boards up to 10&times;10 with the search heuristics exposed as
-           controls.</p>
+        <p>Boards up to 10&times;10, three in a row to win, with the search
+           heuristics exposed as controls.</p>
       </span>
     </a>
   </div>

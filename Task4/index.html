@@ -12,7 +12,7 @@
   <div class="masthead">
     <div>
       <h1>Three players on a 4&times;4 board</h1>
-      <p class="sub">max<sup>n</sup> search, N games, full scoreboard</p>
+      <p class="sub">Minimax with alpha-beta pruning, N games, full scoreboard</p>
     </div>
     <div class="spacer"></div>
     <nav class="tasknav">
@@ -36,22 +36,32 @@
       <div class="panel">
         <h2>Run</h2>
         <div class="field">
+          <label>To win</label>
+          <div class="fixed">3 in a row, column or diagonal</div>
+        </div>
+        <div class="field">
+          <label for="method">Search</label>
+          <select id="method">
+            <option value="alphabeta" selected>Alpha-beta pruning</option>
+            <option value="maxn">max&#8319;, no pruning (for comparison)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Search depth for each player</label>
+          <div class="trio">
+            <label><span class="who p1">&#10005; Player 1</span>
+              <input type="number" id="d1" min="1" max="7" value="5"></label>
+            <label><span class="who p2">&#9675; Player 2</span>
+              <input type="number" id="d2" min="1" max="7" value="5"></label>
+            <label><span class="who p3">&#9651; Player 3</span>
+              <input type="number" id="d3" min="1" max="7" value="5"></label>
+          </div>
+          <div class="hint">Plies looked ahead before the evaluation function
+            takes over. Equal depths draw; lower one to see wins.</div>
+        </div>
+        <div class="field">
           <label for="games">Number of games (1&ndash;10)</label>
           <input type="number" id="games" min="1" max="10" value="10">
-        </div>
-        <div class="field">
-          <label for="winlen">Marks in a row needed to win</label>
-          <select id="winlen">
-            <option value="3" selected>3 in a row</option>
-            <option value="4">4 in a row</option>
-          </select>
-          <div class="hint">4 in a row on this board is a forced draw with
-            three players; see the note below</div>
-        </div>
-        <div class="field">
-          <label for="depth">Search depth</label>
-          <input type="number" id="depth" min="1" max="6" value="4">
-          <div class="hint">Plies looked ahead before the heuristic takes over</div>
         </div>
         <div class="field">
           <label for="delay">Move delay <span id="delayval">120 ms</span></label>
@@ -73,23 +83,26 @@
           <tr class="r1">
             <td><span class="glyph">&#10005;</span> Player 1</td>
             <td class="n" id="w1">0</td><td class="n" id="l1">0</td>
-            <td class="n" id="d1">0</td>
+            <td class="n" id="dr1">0</td>
           </tr>
           <tr class="r2">
             <td><span class="glyph">&#9675;</span> Player 2</td>
             <td class="n" id="w2">0</td><td class="n" id="l2">0</td>
-            <td class="n" id="d2">0</td>
+            <td class="n" id="dr2">0</td>
           </tr>
           <tr class="r3">
             <td><span class="glyph">&#9651;</span> Player 3</td>
             <td class="n" id="w3">0</td><td class="n" id="l3">0</td>
-            <td class="n" id="d3">0</td>
+            <td class="n" id="dr3">0</td>
           </tr>
         </table>
         <table class="readout" style="margin-top:14px">
           <tr><th>Games played</th><td id="played">&ndash;</td></tr>
           <tr><th>Drawn games</th><td id="draws">&ndash;</td></tr>
+          <tr><th>Search used</th><td id="used">&ndash;</td></tr>
           <tr><th>Nodes searched</th><td id="nodes">&ndash;</td></tr>
+          <tr><th>Nodes per move</th><td id="permove">&ndash;</td></tr>
+          <tr><th>Cutoffs</th><td id="cutoffs">&ndash;</td></tr>
           <tr><th>Total time</th><td id="ttime">&ndash;</td></tr>
         </table>
       </div>
@@ -102,31 +115,44 @@
   </div>
 
   <div class="notes">
-    <h2>Why this is not minimax</h2>
-    <p>Minimax needs two players whose interests are exactly opposed, so a
-       single number can describe the position for both: what helps one hurts
-       the other by the same amount. With three players that stops holding. If
-       player 1 is ahead then players 2 and 3 are both behind, but not equally,
-       and neither position is the negation of player 1's.</p>
-    <p>This task uses max<sup>n</sup> instead. Every position is scored as a
-       vector with one component per player, and whoever is to move picks the
-       child that maximises their own component. With two players and a
-       zero-sum rule max<sup>n</sup> reduces to ordinary minimax, so it is a
-       generalisation rather than a different algorithm.</p>
-    <p>Alpha-beta does not carry over, because it depends on
-       <code>alpha</code> and <code>beta</code> being two views of one number
-       and there is no such pair once scores are vectors. Two sound prunes are
-       used instead: a move that wins immediately ends the search of its
-       siblings, and candidate moves are limited to cells near existing marks.</p>
+    <h2>Alpha-beta with three players</h2>
+    <p>Minimax, and alpha-beta with it, needs two sides whose interests are
+       exactly opposed, so that one number describes the position for both.
+       With three players that is not true as it stands: if player 1 is ahead,
+       players 2 and 3 are both behind, but not equally.</p>
+    <p>The fix used here is the <em>paranoid</em> assumption (Sturtevant and
+       Korf, 2000). The player choosing a move assumes the other two are
+       working together against it. That turns the game back into two sides,
+       &ldquo;me&rdquo; and &ldquo;everyone else&rdquo;, with one number between
+       them: my score. I maximise it on my turns, and on each opponent&rsquo;s
+       turn that opponent minimises it. Minimax applies unchanged, and so does
+       alpha-beta pruning. The assumption is pessimistic, but it is safe: a
+       move that holds up against two co-operating opponents holds up against
+       two independent ones.</p>
 
-    <h2>On the choice of win length</h2>
-    <p>Four in a row is the natural rule for a 4&times;4 board, but with three
-       players it is a forced draw. Sixteen cells split three ways gives each
-       player five or six marks, and any line one player threatens can be
-       blocked by either of the other two. Every batch run at four in a row
-       ends drawn, at every search depth tested. Three in a row is therefore
-       the default here, so the scoreboard shows something; switch the control
-       to four to reproduce the drawn result.</p>
+    <h2>Which move to try first</h2>
+    <p>Alpha-beta cuts more when good moves are tried early. Moves are ordered
+       by the number of possible paths still open through the cell, meaning
+       the lines through it that no other player has a mark in. A move that
+       completes a line goes first, and a move that blocks another
+       player&rsquo;s line goes next. The ordering only changes the amount of
+       work, never the value of the move chosen.</p>
+
+    <h2>The max<sup>n</sup> option</h2>
+    <p>max<sup>n</sup> (Luckhardt and Irani, 1986) scores every position as a
+       vector with one value per player, and each player picks the move best
+       for itself. It models the players more faithfully, but with no single
+       number there is no alpha and beta to compare, so it cannot prune beyond
+       stopping at an immediate win. Switching the search above shows what
+       alpha-beta saves: on the same positions, max<sup>n</sup> visited between
+       2 and 15 times as many nodes at depths 3 to 6.</p>
+
+    <h2>Why equal depths draw</h2>
+    <p>With three in a row to win and three players defending, every line one
+       player starts can be blocked by either of the other two. At equal search
+       depths every game ends drawn, in every batch at every depth from 2 to 6.
+       Lowering one player&rsquo;s depth makes it miss threats, which is what
+       produces wins and losses for the scoreboard.</p>
   </div>
 
 </div>

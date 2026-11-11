@@ -110,6 +110,11 @@
        heuristic: lines still open to a player, weighted by the square of how
        many marks the player already has in them, minus the same for the
        opponent.</p>
+    <p>Inside the search, moves are tried in order of how many possible paths
+       are still open through the cell, the same ordering as Task 2: the
+       centre (4 lines) before the corners (3) before the edges (2), counting
+       only lines the opponent has not blocked. Trying strong moves first lets
+       alpha-beta cut off more of the tree without changing any result.</p>
   </div>
 
 </div>

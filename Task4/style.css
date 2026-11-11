@@ -12,6 +12,7 @@
   --ink:         #16202a;
   --ink-soft:    #5c6872;
   --ink-faint:   #8b96a1;
+  --ink-hover:   #000000;
 
   /* players: colour plus a distinct glyph, so colour is never the only cue */
   --p1: #1f4e79;
@@ -37,6 +38,7 @@
     --ink:        #e7ecf1;
     --ink-soft:   #a9b4bf;
     --ink-faint:  #7d8894;
+    --ink-hover:  #ffffff;
     --p1: #7fb2e5;
     --p2: #e0a750;
     --p3: #d980ac;
@@ -236,6 +238,23 @@ body {
 
 .field input[type="range"] { width: 100%; }
 
+/* three small inputs side by side, one per player */
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.trio label { margin: 0; }
+.trio .who { display: block; font-size: 12px; margin-bottom: 3px; }
+.trio .who.p1 { color: var(--p1); }
+.trio .who.p2 { color: var(--p2); }
+.trio .who.p3 { color: var(--p3); }
+
+/* a setting that is fixed by the rules rather than chosen */
+.fixed {
+  font-size: 14px;
+  padding: 7px 9px;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  color: var(--ink-soft);
+}
+
 .field .hint {
   font-size: 12px;
   color: var(--ink-faint);
@@ -255,7 +274,7 @@ button.action {
   cursor: pointer;
 }
 
-button.action:hover:not(:disabled) { background: #000; }
+button.action:hover:not(:disabled) { background: var(--ink-hover); }
 button.action:disabled { opacity: .45; cursor: default; }
 
 button.quiet {

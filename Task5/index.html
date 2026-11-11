@@ -13,7 +13,7 @@
     <div>
       <h1>Scaling up to B&times;B</h1>
       <p class="sub">Boards from 3&times;3 to 10&times;10, three machine
-        players, max<sup>n</sup> with heuristics</p>
+        players, alpha-beta with heuristics</p>
     </div>
     <div class="spacer"></div>
     <nav class="tasknav">
@@ -42,18 +42,25 @@
           <input type="range" id="size" min="3" max="10" step="1" value="6">
         </div>
         <div class="field">
-          <label for="winlen">Marks in a row needed to win</label>
-          <input type="number" id="winlen" min="3" max="6" value="5">
-          <div class="hint" id="winhint">Adjusts with board size</div>
+          <label>To win</label>
+          <div class="fixed">3 in a row, column or diagonal, on any size</div>
         </div>
       </div>
 
       <div class="panel">
         <h2>Search</h2>
         <div class="field">
+          <label for="method">Search</label>
+          <select id="method">
+            <option value="alphabeta" selected>Alpha-beta pruning</option>
+            <option value="maxn">max&#8319;, no pruning (for comparison)</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="depth">Depth limit</label>
-          <input type="number" id="depth" min="1" max="6" value="3">
-          <div class="hint">Plies searched before the heuristic takes over</div>
+          <input type="number" id="depth" min="1" max="6" value="4">
+          <div class="hint">Plies searched before the evaluation function
+            takes over</div>
         </div>
         <div class="field">
           <label for="radius">Candidate radius</label>
@@ -111,6 +118,7 @@
         <table class="readout" style="margin-top:14px">
           <tr><th>Games played</th><td id="played">&ndash;</td></tr>
           <tr><th>Drawn games</th><td id="draws">&ndash;</td></tr>
+          <tr><th>Search used</th><td id="used">&ndash;</td></tr>
           <tr><th>Winning lines on board</th><td id="nlines">&ndash;</td></tr>
           <tr><th>Nodes searched</th><td id="nodes">&ndash;</td></tr>
           <tr><th>Peak nodes, one move</th><td id="peak">&ndash;</td></tr>
@@ -129,35 +137,44 @@
   <div class="notes">
     <h2>Keeping the search inside memory</h2>
     <p>A 10&times;10 board offers 100 opening moves, then 99, then 98. Searching
-       even four plies ahead for three players means on the order of 10<sup>8</sup>
-       positions, which no browser tab will survive. Three heuristics keep it
-       tractable, and all three are exposed above so their effect can be seen.</p>
+       even four plies ahead means on the order of 10<sup>8</sup> positions,
+       which no browser tab will survive. The search uses minimax with
+       alpha-beta pruning under the paranoid assumption described on the
+       Task 4 page, and four things keep it tractable. Three of them are
+       exposed above so their effect can be seen.</p>
     <p><strong>Candidate restriction.</strong> Only empty cells within the
        candidate radius of an existing mark are considered. A move in open
        space far from every other mark cannot contribute to a line any time
-       soon. On a 10&times;10 board this typically cuts the branching factor
-       from around 90 to around 20. It is the single change that makes large
-       boards work. It is a heuristic, not a sound reduction, so in principle
-       it can overlook a good move in empty space.</p>
-    <p><strong>Depth limiting with an evaluation function.</strong> Below the
-       limit the search stops and scores the position directly: for each
-       straight run of cells long enough to win, a player with marks in it and
-       no opponent marks scores the cube of their count. Cubing rather than
-       squaring makes near-complete lines dominate, which is what makes the
-       engine respond to threats instead of spreading marks thinly.</p>
-    <p><strong>Move ordering and immediate pruning.</strong> Near the root,
-       candidates are tried best-first by that same evaluation, and a move
-       that wins outright ends the search of its siblings, since nothing can
-       score higher.</p>
+       soon. On a 10&times;10 board this cuts the branching factor from around
+       90 to around 20, and it is the single change that makes large boards
+       work. It is a heuristic, not a sound reduction, so in principle it can
+       overlook a good move in empty space.</p>
+    <p><strong>Open paths move ordering.</strong> Moves are tried in order of
+       how many possible paths are still open through the cell: lines through
+       it that no other player has a mark in. Cells near the middle of the
+       board lie on more lines than cells near the edge, so they come first,
+       and the opening move is chosen among the cells with the most paths.
+       Moves that complete or block a line jump the queue. Trying strong moves
+       first is what lets alpha-beta cut off the rest early.</p>
+    <p><strong>Pruning.</strong> Alpha-beta abandons a move as soon as it is
+       shown that the player choosing at the parent would never allow it, and
+       any node stops searching once a move wins on the spot, since nothing can
+       beat that. Both are exact and never change the move chosen.</p>
+    <p><strong>Depth limit with an evaluation function.</strong> Below the
+       limit the search stops and scores the position directly: for each run
+       of three cells, a player with marks in it and no opponent marks scores
+       the cube of their count, so an open line holding two marks scores 8
+       against 1 for a line holding one. That steep rise is what makes the
+       engine take threats seriously.</p>
 
     <h2>Where it runs out</h2>
     <p>Measured on this implementation, three players, candidate radius 2:
-       depth 3 completes on every board size from 3&times;3 to 10&times;10
-       inside the default ceiling of 400,000 nodes per move, taking under a
-       second per game. Depth 4 exceeds that ceiling from 6&times;6 upward,
-       peaking at roughly 1.5 million nodes on a 6&times;6 board. Rather than
-       letting the tab run out of memory, the search returns its best result
-       so far and the run reports how many moves were cut short.</p>
+       depth 4 completes on every board size from 3&times;3 to 10&times;10
+       inside the default ceiling of 400,000 nodes per move, peaking at about
+       71,000 nodes for one move on a 10&times;10 board and taking around a
+       second per game. Depth 5 exceeds the ceiling from 6&times;6 upward.
+       Rather than letting the tab run out of memory, the search returns its
+       best result so far and the run reports how many moves were cut short.</p>
   </div>
 
 </div>

@@ -55,6 +55,40 @@ function isFull(board) {
   return true;
 }
 
+/* --- move ordering: the open paths heuristic ---------------------------
+   Same as Task 2. Moves are tried in order of how many lines through the
+   cell are still open to the player moving, so the centre (4 lines) comes
+   before the corners (3) and the edges (2). Good moves found early tighten
+   alpha and beta sooner, which is what lets alpha-beta cut more. The
+   ordering never changes a move's value, only the work spent finding it.
+   ---------------------------------------------------------------------- */
+
+var LINES_THROUGH = [];
+(function () {
+  for (var c = 0; c < 9; c++) LINES_THROUGH.push([]);
+  for (var i = 0; i < LINES.length; i++) {
+    for (var k = 0; k < 3; k++) LINES_THROUGH[LINES[i][k]].push(LINES[i]);
+  }
+})();
+
+function openPaths(board, cell, player) {
+  var opp = other(player);
+  var lines = LINES_THROUGH[cell];
+  var n = 0;
+  for (var i = 0; i < lines.length; i++) {
+    var l = lines[i];
+    if (board[l[0]] !== opp && board[l[1]] !== opp && board[l[2]] !== opp) n++;
+  }
+  return n;
+}
+
+function orderedMoves(board, player) {
+  var moves = legalMoves(board);
+  var key = [];
+  for (var i = 0; i < moves.length; i++) key[moves[i]] = openPaths(board, moves[i], player);
+  return moves.sort(function (a, b) { return key[b] - key[a] || a - b; });
+}
+
 /* --- heuristic for positions the search stops at ---------------------
    Reached only when the depth limit cuts the search off before a
    terminal position. A line still open to a player is one that holds
@@ -111,7 +145,7 @@ function alphabeta(board, toMove, forPlayer, depth, maxDepth, alpha, beta, count
 
   if (depth >= maxDepth) return heuristic(board, forPlayer);
 
-  var moves = legalMoves(board);
+  var moves = orderedMoves(board, toMove);
   var i, score;
 
   if (toMove === forPlayer) {                  // maximising

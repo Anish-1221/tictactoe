@@ -1,16 +1,18 @@
 /* ===================================================================
    Task 5 - interface
-   B x B board for B = 3..10, three machine players, N games.
-   Same engine as Task 4; what changes is that the board size, win
-   length and all three search heuristics are under the user's control.
+   B x B board for B = 3..10, three machine players, three in a row to
+   win, N games. Same engine as Task 4; what changes is that the board
+   size and the search heuristics are under the user's control.
    =================================================================== */
 
 'use strict';
 
 var PLAYERS = 3;
+var WIN_LENGTH = 3;          // three in a row, column or diagonal, any size
 
 var GLYPH = { 1: '✕', 2: '○', 3: '△' };   // ✕ ○ △
 var CLS   = { 1: 'p1', 2: 'p2', 3: 'p3' };
+var METHOD_NAME = { alphabeta: 'alpha-beta', maxn: 'maxⁿ' };
 
 var game, cells, running = false, stopRequested = false;
 var tally;
@@ -19,16 +21,6 @@ var el = function (id) { return document.getElementById(id); };
 var sleep = function (ms) {
   return new Promise(function (r) { setTimeout(r, ms); });
 };
-
-/* A sensible win length for each board size. Four in a row on a 4x4 and
-   five on a 5x5 are forced draws with three players, because every line
-   can be blocked by one of the two opponents, so the default steps up
-   more slowly than the board does. */
-function defaultWinLength(B) {
-  if (B <= 4) return 3;
-  if (B === 5) return 4;
-  return 5;
-}
 
 /* --- board ------------------------------------------------------------- */
 
@@ -67,13 +59,10 @@ function paint(board, lastMove, line) {
 /* --- settings ------------------------------------------------------------ */
 
 function currentSettings() {
-  var B = Number(el('size').value);
-  var maxWin = Math.min(6, B);
-  var winlen = Math.max(3, Math.min(maxWin, Number(el('winlen').value) || 3));
   return {
-    B: B,
-    winlen: winlen,
-    depth: Math.max(1, Math.min(6, Number(el('depth').value) || 3)),
+    B: Number(el('size').value),
+    method: el('method').value,
+    depth: Math.max(1, Math.min(6, Number(el('depth').value) || 4)),
     radius: Math.max(1, Math.min(4, Number(el('radius').value) || 2)),
     budget: Math.max(10000, Number(el('budget').value) || 400000),
     games: Math.max(1, Math.min(10, Number(el('games').value) || 1)),
@@ -84,16 +73,8 @@ function currentSettings() {
 function applyBoardSize() {
   var B = Number(el('size').value);
   el('sizeval').textContent = B + ' × ' + B;
-
-  var maxWin = Math.min(6, B);
-  el('winlen').max = maxWin;
-  if (Number(el('winlen').value) > maxWin) el('winlen').value = maxWin;
-  el('winhint').textContent = 'Between 3 and ' + maxWin +
-    ' on this board. Suggested: ' + defaultWinLength(B);
-
-  var s = currentSettings();
-  game = createGame(s.B, s.winlen, PLAYERS);
-  buildBoard(s.B);
+  game = createGame(B, WIN_LENGTH, PLAYERS);
+  buildBoard(B);
   paint(emptyBoard(game), -1, null);
   el('nlines').textContent = game.lines.length.toLocaleString();
 }
@@ -109,12 +90,11 @@ function resetTally() {
     el('l' + p).textContent = '0';
     el('d' + p).textContent = '0';
   }
-  ['played', 'draws', 'nodes', 'peak', 'hits', 'ttime'].forEach(function (id) {
-    el(id).textContent = '–';
-  });
+  ['played', 'draws', 'used', 'nodes', 'peak', 'hits', 'ttime']
+    .forEach(function (id) { el(id).textContent = '–'; });
 }
 
-function showTally() {
+function showTally(method) {
   for (var p = 1; p <= PLAYERS; p++) {
     var won = tally.won[p];
     el('w' + p).textContent = won;
@@ -123,6 +103,7 @@ function showTally() {
   }
   el('played').textContent = tally.played;
   el('draws').textContent  = tally.draws;
+  el('used').textContent   = METHOD_NAME[method];
   el('nodes').textContent  = Math.round(tally.nodes).toLocaleString();
   el('peak').textContent   = tally.peak.toLocaleString();
   el('hits').textContent   = tally.hits;
@@ -150,7 +131,8 @@ async function playVisibleGame(s) {
   for (;;) {
     if (stopRequested) return null;
 
-    var r = chooseMove(game, board, toMove, s.depth, s.radius, s.budget);
+    var r = chooseMove(game, board, toMove, s.depth, s.radius, s.budget,
+                       s.method);
     board[r.move] = toMove;
     nodes += r.nodes;
     if (r.nodes > peak) peak = r.nodes;
@@ -159,7 +141,7 @@ async function playVisibleGame(s) {
 
     paint(board, r.move, null);
     if (s.delay > 0) await sleep(s.delay);
-    else if (plies % 6 === 0) await sleep(0);   // let the board repaint
+    else await sleep(0);                          // let the board repaint
 
     if (checkWinAt(game, board, r.move)) {
       var found = findWinningLine(game, board);
@@ -171,7 +153,7 @@ async function playVisibleGame(s) {
       return { winner: 0, plies: plies, nodes: nodes, peak: peak,
                hits: hits, ms: performance.now() - t0 };
     }
-    toMove = (toMove % PLAYERS) + 1;
+    toMove = nextPlayer(game, toMove);
   }
 }
 
@@ -186,16 +168,17 @@ async function runBatch() {
   el('warn').textContent = '';
 
   var s = currentSettings();
-  game = createGame(s.B, s.winlen, PLAYERS);
+  game = createGame(s.B, WIN_LENGTH, PLAYERS);
   buildBoard(s.B);
   el('nlines').textContent = game.lines.length.toLocaleString();
 
   resetTally();
+  logLine('search: ' + METHOD_NAME[s.method] + ', depth ' + s.depth +
+          ', radius ' + s.radius);
   logLine('game  winner  plies      nodes   peak/move');
 
   for (var g = 1; g <= s.games; g++) {
-    say('Game ' + g + ' of ' + s.games + ' on ' + s.B + '×' + s.B +
-        ', ' + s.winlen + ' in a row…');
+    say('Game ' + g + ' of ' + s.games + ' on ' + s.B + '×' + s.B + '…');
     el('bar').style.width = Math.round(100 * (g - 1) / s.games) + '%';
 
     var res = await playVisibleGame(s);
@@ -216,7 +199,7 @@ async function runBatch() {
             String(res.nodes).padStart(9) + '  ' +
             String(res.peak).padStart(10));
 
-    showTally();
+    showTally(s.method);
     if (s.delay > 0 && g < s.games) await sleep(s.delay * 3);
   }
 
@@ -240,15 +223,10 @@ async function runBatch() {
 /* --- wiring ---------------------------------------------------------------- */
 
 window.addEventListener('DOMContentLoaded', function () {
-  el('winlen').value = defaultWinLength(Number(el('size').value));
   applyBoardSize();
   resetTally();
 
-  el('size').addEventListener('input', function () {
-    el('winlen').value = defaultWinLength(Number(el('size').value));
-    applyBoardSize();
-  });
-  el('winlen').addEventListener('change', applyBoardSize);
+  el('size').addEventListener('input', applyBoardSize);
 
   el('run').addEventListener('click', runBatch);
   el('stop').addEventListener('click', function () { stopRequested = true; });

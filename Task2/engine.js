@@ -30,6 +30,16 @@ var LINES = [
   [0, 4, 8], [2, 4, 6]               // diagonals
 ];
 
+/* For each cell, the lines that pass through it. The centre is on 4
+   lines, each corner on 3 and each edge on 2. */
+var LINES_THROUGH = [];
+(function () {
+  for (var c = 0; c < 9; c++) LINES_THROUGH.push([]);
+  for (var i = 0; i < LINES.length; i++) {
+    for (var k = 0; k < 3; k++) LINES_THROUGH[LINES[i][k]].push(LINES[i]);
+  }
+})();
+
 function emptyBoard() {
   return [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY];
 }
@@ -69,6 +79,37 @@ function isFull(board) {
     if (board[i] === EMPTY) return false;
   }
   return true;
+}
+
+/* --- move ordering: the open paths heuristic -------------------------
+   Alpha-beta prunes more when the best move is tried first, because a
+   good early result tightens alpha or beta and lets later siblings be
+   cut off sooner. The pruning stays exact either way; only the amount
+   of work changes.
+
+   The ordering used here tries first the cell with the most possible
+   paths still to be explored: the number of lines through the cell
+   that the opponent has not yet blocked. On an empty board that puts
+   the centre (4 paths) first, then the corners (3), then the edges (2).
+   Ties keep their board order, so the search stays deterministic.
+   ------------------------------------------------------------------ */
+
+function openPaths(board, cell, player) {
+  var opp = other(player);
+  var lines = LINES_THROUGH[cell];
+  var n = 0;
+  for (var i = 0; i < lines.length; i++) {
+    var l = lines[i];
+    if (board[l[0]] !== opp && board[l[1]] !== opp && board[l[2]] !== opp) n++;
+  }
+  return n;
+}
+
+function orderedMoves(board, player) {
+  var moves = legalMoves(board);
+  var key = [];
+  for (var i = 0; i < moves.length; i++) key[moves[i]] = openPaths(board, moves[i], player);
+  return moves.sort(function (a, b) { return key[b] - key[a] || a - b; });
 }
 
 /* --- scoring --------------------------------------------------------
@@ -137,15 +178,19 @@ function minimax(board, player, depth, counter) {
    already have a line that is at least as good. The remaining siblings
    cannot change the parent's decision, so we stop looking at them.
    That abandoned work is a cutoff, counted below.
+
+   `ordered` switches the open paths move ordering on or off. The move
+   is always chosen with it on; the off setting exists only so the page
+   can show how much of the saving comes from the ordering.
    ------------------------------------------------------------------ */
 
-function alphabeta(board, player, depth, alpha, beta, counter) {
+function alphabeta(board, player, depth, alpha, beta, counter, ordered) {
   counter.nodes++;
 
   var score = terminalScore(board, depth);
   if (score !== null) return { move: -1, score: score };
 
-  var moves = legalMoves(board);
+  var moves = ordered ? orderedMoves(board, player) : legalMoves(board);
   var bestMove = moves[0];
 
   if (player === MACHINE) {           // maximising
@@ -153,7 +198,7 @@ function alphabeta(board, player, depth, alpha, beta, counter) {
     for (var i = 0; i < moves.length; i++) {
       var m = moves[i];
       board[m] = player;
-      var r = alphabeta(board, HUMAN, depth + 1, alpha, beta, counter);
+      var r = alphabeta(board, HUMAN, depth + 1, alpha, beta, counter, ordered);
       board[m] = EMPTY;
 
       if (r.score > best) { best = r.score; bestMove = m; }
@@ -172,7 +217,7 @@ function alphabeta(board, player, depth, alpha, beta, counter) {
   for (var j = 0; j < moves.length; j++) {
     var n = moves[j];
     board[n] = player;
-    var r2 = alphabeta(board, MACHINE, depth + 1, alpha, beta, counter);
+    var r2 = alphabeta(board, MACHINE, depth + 1, alpha, beta, counter, ordered);
     board[n] = EMPTY;
 
     if (r2.score < worst) { worst = r2.score; bestMove = n; }
@@ -192,22 +237,29 @@ function other(player) {
 }
 
 /* --- the call the interface makes -----------------------------------
-   Runs alpha-beta to choose the move, then runs plain minimax on the
-   same position purely to report what pruning saved.
+   Runs alpha-beta with open paths ordering to choose the move. When
+   asked to compare, it then runs alpha-beta without the ordering and
+   plain minimax on the same position, purely to report what each one
+   saved. Those two extra searches never affect the move.
    ------------------------------------------------------------------ */
 
-function chooseMove(board, player, alsoMeasurePlainMinimax) {
+function chooseMove(board, player, compare) {
   var abCount = { nodes: 0, cutoffs: 0, skipped: 0 };
   var t0 = performance.now();
-  var choice = alphabeta(board.slice(), player, 0, -Infinity, Infinity, abCount);
+  var choice = alphabeta(board.slice(), player, 0, -Infinity, Infinity,
+                         abCount, true);
   var abMs = performance.now() - t0;
 
-  var plainCount = { nodes: 0, cutoffs: 0, skipped: 0 };
-  var plainMs = null;
-  if (alsoMeasurePlainMinimax) {
+  var unordered = null, plain = null;
+  if (compare) {
+    var uCount = { nodes: 0, cutoffs: 0, skipped: 0 };
+    alphabeta(board.slice(), player, 0, -Infinity, Infinity, uCount, false);
+    unordered = { nodes: uCount.nodes, cutoffs: uCount.cutoffs };
+
+    var plainCount = { nodes: 0 };
     var t1 = performance.now();
     minimax(board.slice(), player, 0, plainCount);
-    plainMs = performance.now() - t1;
+    plain = { nodes: plainCount.nodes, ms: performance.now() - t1 };
   }
 
   return {
@@ -215,7 +267,7 @@ function chooseMove(board, player, alsoMeasurePlainMinimax) {
     score: choice.score,
     alphaBeta: { nodes: abCount.nodes, cutoffs: abCount.cutoffs,
                  skipped: abCount.skipped, ms: abMs },
-    plain: alsoMeasurePlainMinimax ? { nodes: plainCount.nodes, ms: plainMs }
-                                   : null
+    unordered: unordered,
+    plain: plain
   };
 }
